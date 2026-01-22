@@ -10,9 +10,14 @@ import time
 from anthropic import Anthropic, APIError, APIConnectionError, APITimeoutError, RateLimitError
 
 # 配置
-API_KEY = os.environ.get("ANTHROPIC_API_KEY") or "NZNJMPGF-UXXZ-CVX1-VJ1N-PWBCBTVFD73R"
+API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 BASE_URL = "https://yunyi.cfd/claude"
 TIMEOUT = 60.0
+
+if not API_KEY:
+    print("错误: 未找到 ANTHROPIC_API_KEY 环境变量")
+    print("请在 .env 文件中设置: ANTHROPIC_API_KEY=your_api_key_here")
+    sys.exit(1)
 
 def test_api_connection():
     """测试API连接"""

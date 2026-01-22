@@ -14,7 +14,7 @@ from datetime import datetime
 from anthropic import Anthropic, APIError, APIConnectionError, APITimeoutError, RateLimitError
 
 # 配置
-API_KEY = os.environ.get("ANTHROPIC_API_KEY") or "NZNJMPGF-UXXZ-CVX1-VJ1N-PWBCBTVFD73R"
+API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 BASE_URL = "https://yunyi.cfd/claude"  # 代理服务器地址
 INPUT_FILE = "keyword_camping_complete_20260120_172523.csv"
 OUTPUT_FILE = f"validated_products_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
