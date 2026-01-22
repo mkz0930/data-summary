@@ -1,0 +1,14 @@
+{
+  "keyword": "camping",
+  "max_asin": 100,
+  "new_product_days": 180,
+  "new_product_min_reviews": 50,
+  "new_product_max_bsr": 10000,
+  "api_retry": 3,
+  "api_timeout": 30,
+  "sales_threshold": 10,
+  "price_ranges": [0, 20, 50, 100, 999999],
+  "main_price_band_threshold": 0.3,
+  "batch_size": 10,
+  "rate_limit_delay": 0.5
+}
