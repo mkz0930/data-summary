@@ -1,6 +1,11 @@
 """
 ASIN采集器模块
 复用ScraperAPI的amazon_scraper.py，提供数据清洗和转换功能
+
+缓存机制：
+- 使用统一缓存管理器 (UnifiedDataCache) 存储搜索结果
+- 缓存键: keyword
+- 默认TTL: 24小时
 """
 
 import sys
@@ -17,18 +22,28 @@ from amazon_scraper import AmazonScraper
 from src.database.models import Product
 from src.utils.logger import get_logger
 from src.utils.retry import retry
+from src.collectors.keyword_cache_manager import KeywordCacheManager
+from src.collectors.cache_adapter import CacheAdapter, get_cache_adapter, DataSource
 
 
 class ASINCollector:
     """ASIN采集器"""
 
-    def __init__(self, api_key: str, max_concurrent: int = 10):
+    def __init__(
+        self,
+        api_key: str,
+        max_concurrent: int = 10,
+        cache_dir: str = "data/keyword_cache",
+        cache_adapter: Optional[CacheAdapter] = None
+    ):
         """
         初始化ASIN采集器
 
         Args:
             api_key: ScraperAPI密钥
             max_concurrent: 最大并发数
+            cache_dir: CSV缓存目录（向后兼容）
+            cache_adapter: 缓存适配器（可选，默认使用全局单例）
         """
         self.logger = get_logger()
         self.scraper = AmazonScraper(
@@ -37,6 +52,10 @@ class ASINCollector:
             max_retries=5,
             request_timeout=30
         )
+        # 保留旧的CSV缓存管理器（向后兼容）
+        self.cache_manager = KeywordCacheManager(cache_dir=cache_dir)
+        # 新的统一缓存适配器
+        self.cache_adapter = cache_adapter or get_cache_adapter()
 
     @retry(max_attempts=3, delay=2.0, backoff=2.0)
     def collect_asins(
@@ -45,7 +64,8 @@ class ASINCollector:
         country_code: str = 'us',
         max_pages: int = 100,
         sales_threshold: int = 10,
-        fetch_details: bool = False
+        fetch_details: bool = False,
+        use_cache: bool = True
     ) -> List[Product]:
         """
         采集关键词相关的ASIN列表
@@ -56,13 +76,60 @@ class ASINCollector:
             max_pages: 最大页数
             sales_threshold: 销量阈值（低于此值停止）
             fetch_details: 是否抓取产品详情
+            use_cache: 是否使用缓存（默认True）
 
         Returns:
             产品对象列表
         """
         self.logger.info(f"开始采集关键词 '{keyword}' 的ASIN数据...")
+        cache_key = f"{keyword}_{country_code}"
 
+        # 1. 优先检查统一缓存
+        if use_cache:
+            cached_results = self.cache_adapter.get_search_results(cache_key)
+            if cached_results:
+                self.logger.info(f"✓ 从统一缓存加载成功，共 {len(cached_results)} 条记录")
+
+                # 转换为Product对象
+                products = self._convert_to_products(cached_results, [])
+
+                # 数据清洗
+                products = self._clean_products(products)
+
+                self.logger.info(f"数据清洗后: {len(products)} 个有效产品")
+                return products
+
+        # 2. 检查旧的CSV缓存（向后兼容）
+        if use_cache and self.cache_manager.has_cache(keyword, country_code):
+            self.logger.info(f"✓ 发现CSV缓存数据，正在加载...")
+            cache_info = self.cache_manager.get_cache_info(keyword, country_code)
+            if cache_info:
+                self.logger.info(f"  - 缓存时间: {cache_info.get('cached_at', 'N/A')}")
+                self.logger.info(f"  - 记录数: {cache_info.get('record_count', 0)}")
+
+            # 从缓存加载
+            search_results = self.cache_manager.load_from_cache(keyword, country_code)
+            if search_results:
+                self.logger.info(f"✓ 从CSV缓存加载成功，跳过网络请求")
+
+                # 同步到统一缓存
+                self.cache_adapter.cache_search_results(cache_key, search_results)
+
+                # 转换为Product对象
+                products = self._convert_to_products(search_results, [])
+
+                # 数据清洗
+                products = self._clean_products(products)
+
+                self.logger.info(f"数据清洗后: {len(products)} 个有效产品")
+                return products
+            else:
+                self.logger.warning(f"⚠ CSV缓存加载失败，将重新抓取")
+
+        # 3. 缓存不存在或加载失败，进行网络抓取
         try:
+            self.logger.info(f"正在从网络抓取数据...")
+
             # 使用智能搜索功能
             result = self.scraper.search_keyword_with_smart_stop(
                 keyword=keyword,
@@ -81,6 +148,30 @@ class ASINCollector:
                 f"采集完成: 共 {result.get('pages_scraped', 0)} 页, "
                 f"{result.get('total_asins', 0)} 个ASIN"
             )
+
+            # 保存到统一缓存
+            if use_cache and search_results:
+                self.cache_adapter.cache_search_results(cache_key, search_results)
+                self.logger.info(f"✓ 已保存到统一缓存")
+
+                # 同时保存到CSV缓存（向后兼容）
+                try:
+                    additional_info = {
+                        'pages_scraped': result.get('pages_scraped', 0),
+                        'total_asins': result.get('total_asins', 0),
+                        'stop_reason': result.get('stop_reason', 'unknown'),
+                        'max_pages': max_pages,
+                        'sales_threshold': sales_threshold
+                    }
+
+                    self.cache_manager.save_to_cache(
+                        keyword=keyword,
+                        search_results=search_results,
+                        country_code=country_code,
+                        additional_info=additional_info
+                    )
+                except Exception as e:
+                    self.logger.warning(f"⚠ 保存CSV缓存失败: {e}")
 
             # 转换为Product对象
             products = self._convert_to_products(search_results, product_details)

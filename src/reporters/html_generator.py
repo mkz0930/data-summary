@@ -36,10 +36,14 @@ class HTMLGenerator:
         validation_stats: Dict[str, Any] = None,
         model_comparison: Dict[str, Any] = None,
         sellerspirit_data: Dict[str, Any] = None,
+        blue_ocean_analysis: Dict[str, Any] = None,
+        advertising_analysis: Dict[str, Any] = None,
+        seasonality_analysis: Dict[str, Any] = None,
+        comprehensive_score: Dict[str, Any] = None,
         filename: str = "report.html"
     ) -> str:
         """
-        生成完整的HTML报告
+        生成完整的HTML报告 - 增强版
 
         Args:
             keyword: 搜索关键词
@@ -50,6 +54,10 @@ class HTMLGenerator:
             validation_stats: AI验证统计数据
             model_comparison: 模型对比结果
             sellerspirit_data: 卖家精灵数据
+            blue_ocean_analysis: 蓝海分析结果
+            advertising_analysis: 广告成本分析结果
+            seasonality_analysis: 季节性分析结果
+            comprehensive_score: 综合评分结果
             filename: 文件名
 
         Returns:
@@ -74,6 +82,10 @@ class HTMLGenerator:
             'validation_stats': validation_stats or {},
             'model_comparison': model_comparison or {},
             'sellerspirit_data': sellerspirit_data or {},
+            'blue_ocean_analysis': blue_ocean_analysis or {},
+            'advertising_analysis': advertising_analysis or {},
+            'seasonality_analysis': seasonality_analysis or {},
+            'comprehensive_score': comprehensive_score or {},
             'charts': charts,
             'new_products': [self._format_product(p) for p in new_products[:100]],
             'top_products': [self._format_product(p) for p in
@@ -209,6 +221,16 @@ class HTMLGenerator:
             color: #999;
             margin-top: 5px;
         }
+        .metric-source {
+            font-size: 0.75em;
+            color: #aaa;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #eee;
+        }
+        .metric-source::before {
+            content: "📊 ";
+        }
         .section {
             background: white;
             padding: 30px;
@@ -286,61 +308,73 @@ class HTMLGenerator:
                 <div class="metric-label">总产品数</div>
                 <div class="metric-value">{{ total_products }}</div>
                 <div class="metric-subtitle">ASIN数量</div>
+                <div class="metric-source">来源: ScraperAPI + Apify</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">月搜索量</div>
                 <div class="metric-value">{{ market_analysis.market_size.monthly_searches or 'N/A' }}</div>
                 <div class="metric-subtitle">{{ market_analysis.market_size.size_rating }}</div>
+                <div class="metric-source">来源: 卖家精灵</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">购买率</div>
                 <div class="metric-value">{% if sellerspirit_data and sellerspirit_data.purchase_rate %}{{ "%.2f"|format(sellerspirit_data.purchase_rate) }}%{% else %}N/A{% endif %}</div>
                 <div class="metric-subtitle">搜索转购买比例</div>
+                <div class="metric-source">来源: 卖家精灵</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">点击率</div>
                 <div class="metric-value">{% if sellerspirit_data and sellerspirit_data.click_rate %}{{ "%.2f"|format(sellerspirit_data.click_rate) }}%{% else %}N/A{% endif %}</div>
                 <div class="metric-subtitle">搜索转点击比例</div>
+                <div class="metric-source">来源: 卖家精灵</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">转化率</div>
                 <div class="metric-value">{% if sellerspirit_data and sellerspirit_data.conversion_rate %}{{ "%.2f"|format(sellerspirit_data.conversion_rate) }}%{% else %}N/A{% endif %}</div>
                 <div class="metric-subtitle">点击转购买比例</div>
+                <div class="metric-source">来源: 卖家精灵</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">垄断率</div>
                 <div class="metric-value">{% if sellerspirit_data and sellerspirit_data.monopoly_rate %}{{ "%.2f"|format(sellerspirit_data.monopoly_rate) }}%{% else %}N/A{% endif %}</div>
                 <div class="metric-subtitle">市场垄断程度</div>
+                <div class="metric-source">来源: 卖家精灵</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">竞争强度</div>
                 <div class="metric-value">{{ market_analysis.competition.intensity }}</div>
                 <div class="metric-subtitle">竞争分数: {{ market_analysis.competition.competition_score }}</div>
+                <div class="metric-source">来源: 系统计算</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">市场空白指数</div>
                 <div class="metric-value">{{ market_analysis.market_blank_index }}</div>
                 <div class="metric-subtitle">{% if market_analysis.market_blank_index > 100 %}高机会{% elif market_analysis.market_blank_index > 50 %}中等机会{% else %}低机会{% endif %}</div>
+                <div class="metric-source">来源: 系统计算 (月搜索量/竞品数)</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">新品机会</div>
                 <div class="metric-value">{{ new_products_count }}</div>
                 <div class="metric-subtitle">近6个月新品</div>
+                <div class="metric-source">来源: 系统计算</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">品牌集中度</div>
                 <div class="metric-value">{{ market_analysis.brand_concentration.cr4 }}%</div>
                 <div class="metric-subtitle">CR4 - {{ market_analysis.brand_concentration.concentration_level }}</div>
+                <div class="metric-source">来源: 系统计算</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">平均价格</div>
                 <div class="metric-value">${{ price_analysis.statistics.mean }}</div>
                 <div class="metric-subtitle">中位数: ${{ price_analysis.statistics.median }}</div>
+                <div class="metric-source">来源: Apify API</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">平均评分</div>
                 <div class="metric-value">{{ market_analysis.competition.average_rating }}</div>
                 <div class="metric-subtitle">平均评论: {{ market_analysis.competition.average_reviews }}</div>
+                <div class="metric-source">来源: Apify API</div>
             </div>
         </div>
 
@@ -375,7 +409,95 @@ class HTMLGenerator:
                     平均评分<strong>{{ lifecycle_analysis.characteristics.average_rating }}</strong>。
                 </p>
             </div>
-            {% if sellerspirit_data and sellerspirit_data.keyword_extensions %}
+
+            {% if lifecycle_analysis.success_analysis %}
+            <div class="insight-box">
+                <div class="insight-title">新品成功率分析</div>
+                <p>
+                    <strong>成功率：</strong>在{{ lifecycle_analysis.success_analysis.total_new_products }}个新品中，
+                    <strong>{{ lifecycle_analysis.success_analysis.successful_count }}</strong>个成功
+                    （成功率: {{ lifecycle_analysis.success_analysis.success_rate }}%），
+                    <strong>{{ lifecycle_analysis.success_analysis.partial_success_count }}</strong>个部分成功，
+                    <strong>{{ lifecycle_analysis.success_analysis.failed_count }}</strong>个未达预期。
+                    {% if lifecycle_analysis.success_analysis.success_difficulty %}
+                    <br><br>
+                    <strong>成功难度：</strong>{{ lifecycle_analysis.success_analysis.success_difficulty.difficulty_level | default('未知') }} -
+                    {{ lifecycle_analysis.success_analysis.success_difficulty.description | default('') }}
+                    <br>
+                    <strong>建议：</strong>{{ lifecycle_analysis.success_analysis.success_difficulty.recommendation | default('') }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            {% if lifecycle_analysis.entry_timing %}
+            <div class="insight-box">
+                <div class="insight-title">市场进入时机评估</div>
+                <p>
+                    <strong>时机评分：</strong>{{ lifecycle_analysis.entry_timing.timing_score }}/100 -
+                    <span class="badge {% if lifecycle_analysis.entry_timing.timing_grade == '优秀' %}badge-success{% elif lifecycle_analysis.entry_timing.timing_grade == '良好' %}badge-info{% elif lifecycle_analysis.entry_timing.timing_grade == '一般' %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ lifecycle_analysis.entry_timing.timing_grade }}
+                    </span>
+                    <br><br>
+                    <strong>评估因素：</strong>
+                    新品占比 {{ lifecycle_analysis.entry_timing.factors.new_product_rate }}%，
+                    趋势方向 {{ lifecycle_analysis.entry_timing.factors.trend_direction }}，
+                    平均竞品评论数 {{ lifecycle_analysis.entry_timing.factors.avg_competitor_reviews }}
+                    <br><br>
+                    <strong>建议：</strong>{{ lifecycle_analysis.entry_timing.timing_recommendation }}
+                </p>
+            </div>
+            {% endif %}
+
+            {% if lifecycle_analysis.lifecycle_distribution %}
+            <div class="insight-box">
+                <div class="insight-title">生命周期阶段分布</div>
+                <p>
+                    <strong>市场成熟度：</strong>{{ lifecycle_analysis.lifecycle_distribution.market_maturity }} -
+                    {{ lifecycle_analysis.lifecycle_distribution.market_maturity_desc }}
+                </p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">生命周期阶段</th>
+                            <th style="padding: 10px; text-align: center;">产品数量</th>
+                            <th style="padding: 10px; text-align: center;">占比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stage, count in lifecycle_analysis.lifecycle_distribution.counts.items() %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">{{ stage }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ count }}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge badge-info">{{ lifecycle_analysis.lifecycle_distribution.percentages[stage] }}%</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if lifecycle_analysis.opportunity_score %}
+            <div class="insight-box" style="background: linear-gradient(135deg, #f5f7fa 0%, #e8f4f8 100%);">
+                <div class="insight-title">新品机会评分</div>
+                <div style="display: flex; align-items: center; margin-top: 15px;">
+                    <div style="font-size: 3em; font-weight: bold; color: {% if lifecycle_analysis.opportunity_score.grade == 'A' %}#28a745{% elif lifecycle_analysis.opportunity_score.grade == 'B' %}#17a2b8{% elif lifecycle_analysis.opportunity_score.grade == 'C' %}#ffc107{% else %}#dc3545{% endif %};">
+                        {{ lifecycle_analysis.opportunity_score.grade }}
+                    </div>
+                    <div style="margin-left: 20px;">
+                        <div style="font-size: 1.5em; font-weight: bold;">{{ lifecycle_analysis.opportunity_score.total_score }}/100</div>
+                        <div style="color: #666;">{{ lifecycle_analysis.opportunity_score.grade_desc }}</div>
+                    </div>
+                </div>
+                <p style="margin-top: 15px;">
+                    <strong>建议：</strong>{{ lifecycle_analysis.opportunity_score.recommendation }}
+                </p>
+            </div>
+            {% endif %}
+            {# 关键词扩展建议 - 暂时屏蔽，需要时再启用 #}
+            {# {% if sellerspirit_data and sellerspirit_data.keyword_extensions %}
             <div class="insight-box">
                 <div class="insight-title">🔍 关键词扩展建议</div>
                 <p>基于卖家精灵数据分析，以下是相关的关键词扩展建议，可用于优化产品listing和广告投放：</p>
@@ -385,7 +507,7 @@ class HTMLGenerator:
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
+            {% endif %} #}
         </div>
 
         <!-- AI分类验证 -->
@@ -694,54 +816,46 @@ class HTMLGenerator:
                         <th style="padding: 10px; text-align: left;">价格段</th>
                         <th style="padding: 10px; text-align: center;">产品数</th>
                         <th style="padding: 10px; text-align: center;">占比</th>
+                        <th style="padding: 10px; text-align: center;">平均价格</th>
                         <th style="padding: 10px; text-align: center;">平均评分</th>
-                        <th style="padding: 10px; text-align: center;">平均评论数</th>
-                        <th style="padding: 10px; text-align: center;">竞争强度</th>
+                        <th style="padding: 10px; text-align: center;">平均销量</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for seg in segmentation_analysis.price_segments %}
+                    {% for seg_name, seg_data in segmentation_analysis.price_segments.segments.items() %}
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px;"><strong>{{ seg.segment }}</strong></td>
-                        <td style="padding: 10px; text-align: center;">{{ seg.product_count }}</td>
-                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg.percentage) }}%</td>
-                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg.avg_rating) }}</td>
-                        <td style="padding: 10px; text-align: center;">{{ seg.avg_reviews }}</td>
-                        <td style="padding: 10px; text-align: center;">
-                            <span class="badge {% if seg.competition_level == '激烈' %}badge-danger{% elif seg.competition_level == '中等' %}badge-warning{% else %}badge-success{% endif %}">
-                                {{ seg.competition_level }}
-                            </span>
-                        </td>
+                        <td style="padding: 10px;"><strong>{{ seg_name }}</strong></td>
+                        <td style="padding: 10px; text-align: center;">{{ seg_data.product_count }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg_data.market_share) }}%</td>
+                        <td style="padding: 10px; text-align: center;">${{ "%.2f"|format(seg_data.avg_price) }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg_data.avg_rating) }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ "%.0f"|format(seg_data.avg_sales) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
 
-            <h3 style="margin: 20px 0 10px 0; color: #667eea;">品牌段分析</h3>
+            <h3 style="margin: 20px 0 10px 0; color: #667eea;">品牌段分析 (Top 10)</h3>
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
-                        <th style="padding: 10px; text-align: left;">品牌段</th>
+                        <th style="padding: 10px; text-align: left;">品牌</th>
                         <th style="padding: 10px; text-align: center;">产品数</th>
-                        <th style="padding: 10px; text-align: center;">占比</th>
+                        <th style="padding: 10px; text-align: center;">市场份额</th>
                         <th style="padding: 10px; text-align: center;">平均价格</th>
                         <th style="padding: 10px; text-align: center;">平均评分</th>
-                        <th style="padding: 10px; text-align: center;">市场机会</th>
+                        <th style="padding: 10px; text-align: center;">总销量</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for seg in segmentation_analysis.brand_segments %}
+                    {% for brand in segmentation_analysis.brand_segments.top_brands[:10] %}
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px;"><strong>{{ seg.segment }}</strong></td>
-                        <td style="padding: 10px; text-align: center;">{{ seg.product_count }}</td>
-                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg.percentage) }}%</td>
-                        <td style="padding: 10px; text-align: center;">${{ "%.2f"|format(seg.avg_price) }}</td>
-                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg.avg_rating) }}</td>
-                        <td style="padding: 10px; text-align: center;">
-                            <span class="badge {% if seg.opportunity_level == '高' %}badge-success{% elif seg.opportunity_level == '中' %}badge-info{% else %}badge-warning{% endif %}">
-                                {{ seg.opportunity_level }}
-                            </span>
-                        </td>
+                        <td style="padding: 10px;"><strong>{{ brand.brand }}</strong></td>
+                        <td style="padding: 10px; text-align: center;">{{ brand.product_count }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(brand.market_share) }}%</td>
+                        <td style="padding: 10px; text-align: center;">${{ "%.2f"|format(brand.avg_price) }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(brand.avg_rating) }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ brand.total_sales }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -769,14 +883,14 @@ class HTMLGenerator:
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">新品增长率</div>
-                    <div class="metric-value">{{ "%.1f"|format(trend_analysis.new_product_growth.growth_rate) }}%</div>
-                    <div class="metric-subtitle">近期新品增长</div>
+                    <div class="metric-label">新品占比</div>
+                    <div class="metric-value">{{ "%.1f"|format(trend_analysis.new_product_trend.new_product_rate) }}%</div>
+                    <div class="metric-subtitle">{{ trend_analysis.new_product_trend.new_product_count }} 个新品</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">市场成熟度</div>
-                    <div class="metric-value">{{ trend_analysis.market_maturity.maturity_level }}</div>
-                    <div class="metric-subtitle">{{ trend_analysis.market_maturity.maturity_score }}/100</div>
+                    <div class="metric-label">竞争趋势</div>
+                    <div class="metric-value">{{ trend_analysis.competition_trend.trend }}</div>
+                    <div class="metric-subtitle">{{ trend_analysis.competition_trend.competition_level }}</div>
                 </div>
             </div>
             <div class="insight-box">
@@ -784,34 +898,389 @@ class HTMLGenerator:
                 <p>
                     <strong>市场趋势：</strong>当前市场呈现<strong>{{ trend_analysis.market_trend.trend_direction }}</strong>趋势，
                     趋势强度为<strong>{{ trend_analysis.market_trend.trend_strength }}/100</strong>。
-                    {% if trend_analysis.market_trend.trend_direction == '上升' %}
+                    {% if trend_analysis.market_trend.trend_direction == 'growing' %}
                     市场正在快速增长，是进入的好时机。
-                    {% elif trend_analysis.market_trend.trend_direction == '稳定' %}
+                    {% elif trend_analysis.market_trend.trend_direction == 'stable' %}
                     市场相对稳定，适合稳健经营。
                     {% else %}
                     市场可能面临挑战，需谨慎评估。
                     {% endif %}
                     <br><br>
-                    <strong>新品动态：</strong>新品增长率为<strong>{{ "%.1f"|format(trend_analysis.new_product_growth.growth_rate) }}%</strong>，
-                    {% if trend_analysis.new_product_growth.growth_rate > 20 %}
+                    <strong>新品动态：</strong>新品占比为<strong>{{ "%.1f"|format(trend_analysis.new_product_trend.new_product_rate) }}%</strong>，
+                    {% if trend_analysis.new_product_trend.new_product_rate > 20 %}
                     表明市场活跃度高，创新机会多。
-                    {% elif trend_analysis.new_product_growth.growth_rate > 0 %}
+                    {% elif trend_analysis.new_product_trend.new_product_rate > 10 %}
                     市场保持一定活力。
                     {% else %}
                     新品进入速度放缓。
                     {% endif %}
                     <br><br>
-                    <strong>市场成熟度：</strong>市场成熟度为<strong>{{ trend_analysis.market_maturity.maturity_level }}</strong>
-                    （{{ trend_analysis.market_maturity.maturity_score }}/100），
-                    {% if trend_analysis.market_maturity.maturity_level == '成熟期' %}
-                    市场已经成熟，竞争充分，需要差异化策略。
-                    {% elif trend_analysis.market_maturity.maturity_level == '成长期' %}
-                    市场处于成长阶段，仍有较大发展空间。
-                    {% else %}
-                    市场处于早期阶段，机会与风险并存。
+                    <strong>竞争态势：</strong>{{ trend_analysis.competition_trend.interpretation }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 蓝海产品分析 -->
+        {% if blue_ocean_analysis.blue_ocean_count %}
+        <div class="section">
+            <h2 class="section-title">🌊 蓝海产品分析</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">蓝海产品数</div>
+                    <div class="metric-value">{{ blue_ocean_analysis.blue_ocean_count }}</div>
+                    <div class="metric-subtitle">占比: {{ "%.1f"|format(blue_ocean_analysis.blue_ocean_rate) }}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">市场竞争指数</div>
+                    <div class="metric-value">{{ "%.1f"|format(blue_ocean_analysis.market_competition.competition_index) }}</div>
+                    <div class="metric-subtitle">
+                        {% if blue_ocean_analysis.market_competition.competition_index < 40 %}低竞争
+                        {% elif blue_ocean_analysis.market_competition.competition_index < 60 %}中等竞争
+                        {% else %}高竞争{% endif %}
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">市场机会等级</div>
+                    <div class="metric-value">{{ blue_ocean_analysis.opportunity_assessment.opportunity_desc }}</div>
+                    <div class="metric-subtitle">{{ blue_ocean_analysis.opportunity_assessment.opportunity_level }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">平均蓝海评分</div>
+                    <div class="metric-value">{{ "%.1f"|format(blue_ocean_analysis.blue_ocean_products[0].blue_ocean_score if blue_ocean_analysis.blue_ocean_products else 0) }}</div>
+                    <div class="metric-subtitle">满分100分</div>
+                </div>
+            </div>
+
+            <div class="insight-box">
+                <div class="insight-title">🎯 市场机会评估</div>
+                <p>
+                    <strong>蓝海产品占比：</strong>在{{ blue_ocean_analysis.market_competition.total_brands }}个产品中，
+                    发现<strong>{{ blue_ocean_analysis.blue_ocean_count }}</strong>个蓝海产品机会，
+                    占比<strong>{{ "%.1f"|format(blue_ocean_analysis.blue_ocean_rate) }}%</strong>。
+                    <br><br>
+                    <strong>竞争环境：</strong>市场竞争指数为<strong>{{ "%.1f"|format(blue_ocean_analysis.market_competition.competition_index) }}</strong>，
+                    平均评论数<strong>{{ "%.0f"|format(blue_ocean_analysis.market_competition.avg_reviews) }}</strong>，
+                    平均评分<strong>{{ "%.1f"|format(blue_ocean_analysis.market_competition.avg_rating) }}</strong>，
+                    高评分产品占比<strong>{{ "%.1f"|format(blue_ocean_analysis.market_competition.high_rating_rate) }}%</strong>。
+                    <br><br>
+                    <strong>机会评估：</strong>{{ blue_ocean_analysis.opportunity_assessment.opportunity_desc }}。
+                    {% for rec in blue_ocean_analysis.opportunity_assessment.recommendations %}
+                    <br>• {{ rec }}
+                    {% endfor %}
+                </p>
+            </div>
+
+            {% if blue_ocean_analysis.segments %}
+            <div class="insight-box" style="margin-top: 20px;">
+                <div class="insight-title">💰 价格区间分析</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">价格区间</th>
+                            <th style="padding: 10px; text-align: center;">产品数</th>
+                            <th style="padding: 10px; text-align: center;">平均评分</th>
+                            <th style="padding: 10px; text-align: center;">平均销量</th>
+                            <th style="padding: 10px; text-align: center;">平均竞争指数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for seg in blue_ocean_analysis.segments %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;"><strong>{{ seg.price_range }}</strong></td>
+                            <td style="padding: 10px; text-align: center;">{{ seg.count }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(seg.avg_rating) }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ "%.0f"|format(seg.avg_sales) }}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if seg.avg_competition < 40 %}badge-success{% elif seg.avg_competition < 60 %}badge-info{% else %}badge-warning{% endif %}">
+                                    {{ "%.1f"|format(seg.avg_competition) }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if blue_ocean_analysis.top_opportunities %}
+            <div class="insight-box" style="margin-top: 20px;">
+                <div class="insight-title">🏆 Top 10 蓝海产品机会</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">ASIN</th>
+                            <th style="padding: 10px; text-align: left;">产品名称</th>
+                            <th style="padding: 10px; text-align: center;">价格</th>
+                            <th style="padding: 10px; text-align: center;">月销量</th>
+                            <th style="padding: 10px; text-align: center;">评论数</th>
+                            <th style="padding: 10px; text-align: center;">评分</th>
+                            <th style="padding: 10px; text-align: center;">蓝海评分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in blue_ocean_analysis.top_opportunities[:10] %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">{{ product.asin }}</td>
+                            <td style="padding: 10px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ product.name }}
+                            </td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.2f"|format(product.price) }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ product.sales_volume }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ product.reviews_count }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(product.rating) }}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if product.blue_ocean_score >= 70 %}badge-success{% elif product.blue_ocean_score >= 50 %}badge-info{% else %}badge-warning{% endif %}">
+                                    {{ "%.1f"|format(product.blue_ocean_score) }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- 广告成本分析 -->
+        {% if advertising_analysis.bid_analysis %}
+        <div class="section">
+            <h2 class="section-title">💰 广告成本分析</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">建议竞价</div>
+                    <div class="metric-value">${{ "%.2f"|format(advertising_analysis.bid_analysis.suggested_bid) }}</div>
+                    <div class="metric-subtitle">竞价范围: ${{ "%.2f"|format(advertising_analysis.bid_analysis.bid_range.min) }} - ${{ "%.2f"|format(advertising_analysis.bid_analysis.bid_range.max) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">预估CPC</div>
+                    <div class="metric-value">${{ "%.2f"|format(advertising_analysis.cpc_analysis.estimated_cpc) }}</div>
+                    <div class="metric-subtitle">CPC等级: {{ advertising_analysis.cpc_analysis.cpc_level }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">预估ACoS</div>
+                    <div class="metric-value">{{ "%.1f"|format(advertising_analysis.acos_analysis.estimated_acos) }}%</div>
+                    <div class="metric-subtitle">ACoS等级: {{ advertising_analysis.acos_analysis.acos_level }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">广告可行性</div>
+                    <div class="metric-value">{{ advertising_analysis.advertising_feasibility.feasibility_level }}</div>
+                    <div class="metric-subtitle">评分: {{ advertising_analysis.advertising_feasibility.feasibility_score }}/100</div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">广告投放建议</div>
+                <p>
+                    <strong>竞价策略：</strong>{{ advertising_analysis.bid_analysis.bid_strategy }}<br><br>
+                    <strong>ACoS分析：</strong>{{ advertising_analysis.acos_analysis.acos_interpretation }}<br><br>
+                    <strong>可行性评估：</strong>{{ advertising_analysis.advertising_feasibility.recommendation }}
+                </p>
+            </div>
+            {% if advertising_analysis.roi_projection %}
+            <div class="insight-box" style="margin-top: 20px;">
+                <div class="insight-title">ROI预测</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">指标</th>
+                            <th style="padding: 10px; text-align: center;">保守估计</th>
+                            <th style="padding: 10px; text-align: center;">中等估计</th>
+                            <th style="padding: 10px; text-align: center;">乐观估计</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">月广告支出</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.conservative.monthly_ad_spend) }}</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.moderate.monthly_ad_spend) }}</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.optimistic.monthly_ad_spend) }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">预估销售额</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.conservative.estimated_sales) }}</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.moderate.estimated_sales) }}</td>
+                            <td style="padding: 10px; text-align: center;">${{ "%.0f"|format(advertising_analysis.roi_projection.scenarios.optimistic.estimated_sales) }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">预估ROI</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if advertising_analysis.roi_projection.scenarios.conservative.roi > 0 %}badge-success{% else %}badge-danger{% endif %}">
+                                    {{ "%.1f"|format(advertising_analysis.roi_projection.scenarios.conservative.roi) }}%
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if advertising_analysis.roi_projection.scenarios.moderate.roi > 0 %}badge-success{% else %}badge-danger{% endif %}">
+                                    {{ "%.1f"|format(advertising_analysis.roi_projection.scenarios.moderate.roi) }}%
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if advertising_analysis.roi_projection.scenarios.optimistic.roi > 0 %}badge-success{% else %}badge-danger{% endif %}">
+                                    {{ "%.1f"|format(advertising_analysis.roi_projection.scenarios.optimistic.roi) }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- 季节性分析 -->
+        {% if seasonality_analysis.seasonality_level %}
+        <div class="section">
+            <h2 class="section-title">📅 季节性分析</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">季节性等级</div>
+                    <div class="metric-value">{{ seasonality_analysis.seasonality_level }}</div>
+                    <div class="metric-subtitle">季节性指数: {{ seasonality_analysis.seasonality_index }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">当前季节状态</div>
+                    <div class="metric-value">{{ seasonality_analysis.current_season_status.status }}</div>
+                    <div class="metric-subtitle">{{ seasonality_analysis.current_season_status.recommendation }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">销售高峰月份</div>
+                    <div class="metric-value">{{ seasonality_analysis.peak_months|join(', ') if seasonality_analysis.peak_months else 'N/A' }}</div>
+                    <div class="metric-subtitle">最佳销售时机</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">销售低谷月份</div>
+                    <div class="metric-value">{{ seasonality_analysis.low_months|join(', ') if seasonality_analysis.low_months else 'N/A' }}</div>
+                    <div class="metric-subtitle">需要注意的时期</div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">季节性洞察</div>
+                <p>
+                    <strong>季节性特征：</strong>{{ seasonality_analysis.seasonality_description }}<br><br>
+                    <strong>当前状态：</strong>{{ seasonality_analysis.current_season_status.description }}<br><br>
+                    {% if seasonality_analysis.entry_timing_recommendation %}
+                    <strong>进入时机建议：</strong>{{ seasonality_analysis.entry_timing_recommendation.recommendation }}<br>
+                    最佳进入月份: {{ seasonality_analysis.entry_timing_recommendation.best_entry_months|join(', ') if seasonality_analysis.entry_timing_recommendation.best_entry_months else '全年均可' }}
                     {% endif %}
                 </p>
             </div>
+            {% if seasonality_analysis.monthly_analysis %}
+            <div class="insight-box" style="margin-top: 20px;">
+                <div class="insight-title">月度趋势分析</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: center;">月份</th>
+                            <th style="padding: 10px; text-align: center;">搜索指数</th>
+                            <th style="padding: 10px; text-align: center;">季节性标签</th>
+                            <th style="padding: 10px; text-align: center;">建议</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for month_data in seasonality_analysis.monthly_analysis %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; text-align: center;">{{ month_data.month }}月</td>
+                            <td style="padding: 10px; text-align: center;">{{ month_data.index }}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if month_data.tag == '高峰' %}badge-success{% elif month_data.tag == '低谷' %}badge-danger{% else %}badge-info{% endif %}">
+                                    {{ month_data.tag }}
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">{{ month_data.suggestion }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- 综合评分 (增强版) -->
+        {% if comprehensive_score.total_score %}
+        <div class="section">
+            <h2 class="section-title">🎯 市场综合评分 (4大方法论)</h2>
+            <div class="metrics-grid">
+                <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="metric-label" style="color: rgba(255,255,255,0.8);">综合总分</div>
+                    <div class="metric-value" style="color: white; font-size: 3em;">{{ "%.1f"|format(comprehensive_score.total_score) }}</div>
+                    <div class="metric-subtitle" style="color: rgba(255,255,255,0.8);">满分100分</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">市场等级</div>
+                    <div class="metric-value" style="font-size: 2.5em;">{{ comprehensive_score.grade }}</div>
+                    <div class="metric-subtitle">{{ comprehensive_score.grade_description }}</div>
+                </div>
+                <div class="metric-card" style="grid-column: span 2;">
+                    <div class="metric-label">综合建议</div>
+                    <div class="metric-value" style="font-size: 1.2em; line-height: 1.5;">{{ comprehensive_score.recommendation }}</div>
+                </div>
+            </div>
+
+            <div class="insight-box">
+                <div class="insight-title">4大维度评分详情</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f5f7fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">评分维度</th>
+                            <th style="padding: 10px; text-align: center;">得分</th>
+                            <th style="padding: 10px; text-align: center;">权重</th>
+                            <th style="padding: 10px; text-align: center;">加权得分</th>
+                            <th style="padding: 10px; text-align: left;">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if comprehensive_score.dimension_scores %}
+                        {% for dim_name, dim_data in comprehensive_score.dimension_scores.items() %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;"><strong>{{ dim_data.name if dim_data.name else dim_name }}</strong></td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="badge {% if dim_data.score >= 70 %}badge-success{% elif dim_data.score >= 50 %}badge-info{% elif dim_data.score >= 30 %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ "%.1f"|format(dim_data.score) }}
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">{{ "%.0f"|format(dim_data.weight * 100) }}%</td>
+                            <td style="padding: 10px; text-align: center;">{{ "%.1f"|format(dim_data.weighted_score) }}</td>
+                            <td style="padding: 10px;">{{ dim_data.description if dim_data.description else '' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if comprehensive_score.key_insights %}
+            <div class="insight-box" style="margin-top: 20px;">
+                <div class="insight-title">关键洞察</div>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    {% for insight in comprehensive_score.key_insights %}
+                    <li style="margin-bottom: 8px;">{{ insight }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if comprehensive_score.risk_factors %}
+            <div class="insight-box" style="margin-top: 20px; border-left-color: #dc3545;">
+                <div class="insight-title" style="color: #dc3545;">风险因素</div>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    {% for risk in comprehensive_score.risk_factors %}
+                    <li style="margin-bottom: 8px;">{{ risk }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if comprehensive_score.opportunity_factors %}
+            <div class="insight-box" style="margin-top: 20px; border-left-color: #28a745;">
+                <div class="insight-title" style="color: #28a745;">机会因素</div>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    {% for opp in comprehensive_score.opportunity_factors %}
+                    <li style="margin-bottom: 8px;">{{ opp }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 

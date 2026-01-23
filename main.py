@@ -38,6 +38,9 @@ def parse_arguments():
   # 强制重新分析已分析过的关键词
   python main.py --keyword camping --force-reanalysis
 
+  # 使用缓存数据但不重新生成报告
+  python main.py --keyword camping --no-regenerate-report
+
   # 仅显示分析摘要
   python main.py --summary
 
@@ -80,6 +83,20 @@ def parse_arguments():
         '--force-reanalysis',
         action='store_true',
         help='强制重新分析，即使关键词已经分析过'
+    )
+
+    parser.add_argument(
+        '--regenerate-report',
+        action='store_true',
+        default=True,
+        help='使用缓存数据时重新生成带时间戳的报告（默认启用）'
+    )
+
+    parser.add_argument(
+        '--no-regenerate-report',
+        action='store_false',
+        dest='regenerate_report',
+        help='使用缓存数据时不重新生成报告，直接返回原报告路径'
     )
 
     parser.add_argument(
@@ -186,7 +203,8 @@ def main():
             keyword=args.keyword,
             skip_collection=args.skip_collection,
             skip_validation=args.skip_validation,
-            force_reanalysis=args.force_reanalysis
+            force_reanalysis=args.force_reanalysis,
+            regenerate_report=args.regenerate_report
         )
 
         # 输出结果
@@ -199,6 +217,10 @@ def main():
             # 如果是从缓存加载的
             if result.get('from_cache'):
                 print(f"状态: 使用已有分析结果 (分析于 {result.get('analyzed_at')})")
+                if result.get('report_regenerated'):
+                    print(f"报告: 已重新生成带时间戳的新报告")
+                else:
+                    print(f"报告: 使用原有报告")
                 print(f"市场空白指数: {result.get('market_blank_index', 'N/A')}")
                 print(f"新品数量: {result.get('new_product_count', 'N/A')}")
             else:

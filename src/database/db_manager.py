@@ -45,10 +45,58 @@ class DatabaseManager:
             with self.get_connection() as conn:
                 conn.executescript(CREATE_TABLES_SQL)
                 conn.commit()
+            # 执行数据库迁移，添加缺失的列
+            self._migrate_database()
             self.logger.info(f"数据库初始化成功: {self.db_path}")
         except Exception as e:
             self.logger.error(f"数据库初始化失败: {e}")
             raise
+
+    def _migrate_database(self) -> None:
+        """数据库迁移：检查并添加缺失的列"""
+        # 定义需要检查的列及其类型
+        products_columns = {
+            'listing_quality_score': 'REAL',
+            'is_weak_listing': 'BOOLEAN',
+            'estimated_cost': 'REAL',
+            'gross_margin': 'REAL',
+            'profit_amount': 'REAL',
+            'weight_lb': 'REAL'
+        }
+
+        sellerspirit_columns = {
+            'cpc_bid': 'REAL',
+            'acos_estimate': 'REAL',
+            'seasonality_index': 'REAL',
+            'trend_direction': 'TEXT',
+            'long_tail_count': 'INTEGER',
+            'search_trend_data': 'TEXT'
+        }
+
+        try:
+            with self.get_connection() as conn:
+                # 迁移 products 表
+                self._add_missing_columns(conn, 'products', products_columns)
+                # 迁移 sellerspirit_data 表
+                self._add_missing_columns(conn, 'sellerspirit_data', sellerspirit_columns)
+                conn.commit()
+        except Exception as e:
+            self.logger.error(f"数据库迁移失败: {e}")
+
+    def _add_missing_columns(self, conn, table_name: str, columns: Dict[str, str]) -> None:
+        """为表添加缺失的列"""
+        # 获取现有列
+        cursor = conn.execute(f"PRAGMA table_info({table_name})")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+
+        # 添加缺失的列
+        for col_name, col_type in columns.items():
+            if col_name not in existing_columns:
+                try:
+                    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}")
+                    self.logger.info(f"已添加列 {table_name}.{col_name}")
+                except Exception as e:
+                    self.logger.warning(f"添加列 {table_name}.{col_name} 失败: {e}")
 
     @contextmanager
     def get_connection(self):
@@ -139,9 +187,12 @@ class DatabaseManager:
             self.logger.error(f"获取产品数据失败 (ASIN: {asin}): {e}")
         return None
 
-    def get_all_products(self) -> List[Product]:
+    def get_all_products(self, limit: int = None) -> List[Product]:
         """
         获取所有产品数据
+
+        Args:
+            limit: 限制返回的产品数量，None表示返回所有产品
 
         Returns:
             产品对象列表
@@ -149,7 +200,10 @@ class DatabaseManager:
         products = []
         try:
             with self.get_connection() as conn:
-                cursor = conn.execute("SELECT * FROM products")
+                if limit:
+                    cursor = conn.execute("SELECT * FROM products LIMIT ?", (limit,))
+                else:
+                    cursor = conn.execute("SELECT * FROM products")
                 for row in cursor:
                     products.append(Product.from_dict(dict(row)))
         except Exception as e:
@@ -190,6 +244,21 @@ class DatabaseManager:
         except Exception as e:
             self.logger.error(f"获取产品数量失败: {e}")
             return 0
+
+    def get_existing_asins(self) -> set:
+        """
+        获取数据库中所有已存在的ASIN集合
+
+        Returns:
+            已存在的ASIN集合
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.execute("SELECT asin FROM products")
+                return {row[0] for row in cursor.fetchall()}
+        except Exception as e:
+            self.logger.error(f"获取已存在ASIN列表失败: {e}")
+            return set()
 
     # ==================== 分类验证表操作 ====================
 
@@ -349,12 +418,16 @@ class DatabaseManager:
             with self.get_connection() as conn:
                 sql = """
                 INSERT INTO sellerspirit_data
-                (keyword, monthly_searches, cr4, keyword_extensions, collected_at)
-                VALUES (?, ?, ?, ?, ?)
+                (keyword, monthly_searches, purchase_rate, click_rate, conversion_rate, monopoly_rate, cr4, keyword_extensions, collected_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 conn.execute(sql, (
                     data.keyword,
                     data.monthly_searches,
+                    data.purchase_rate,
+                    data.click_rate,
+                    data.conversion_rate,
+                    data.monopoly_rate,
                     data.cr4,
                     data.keyword_extensions,
                     data.collected_at

@@ -230,6 +230,131 @@ class ConfigManager:
         return self.get_env('GOOGLE_API_KEY')
 
     @property
+    def validation_max_concurrent(self) -> int:
+        """获取验证器最大并发数（已废弃，保留向后兼容）"""
+        return self.get('validation_max_concurrent', 5)
+
+    @property
+    def gemini_max_concurrent(self) -> int:
+        """获取Gemini验证器最大并发数"""
+        return self.get('gemini_max_concurrent', 1000)
+
+    @property
+    def gemini_rate_limit_delay(self) -> float:
+        """获取Gemini API调用间隔（秒）"""
+        return self.get('gemini_rate_limit_delay', 0.01)
+
+    @property
+    def claude_max_concurrent(self) -> int:
+        """获取Claude验证器最大并发数"""
+        return self.get('claude_max_concurrent', 50)
+
+    @property
+    def claude_rate_limit_delay(self) -> float:
+        """获取Claude API调用间隔（秒）"""
+        return self.get('claude_rate_limit_delay', 0.1)
+
+    @property
+    def scraperapi_max_concurrent(self) -> int:
+        """获取ScraperAPI最大并发数"""
+        return self.get('scraperapi_max_concurrent', 20)
+
+    @property
+    def apify_max_concurrent(self) -> int:
+        """获取Apify API最大并发数"""
+        return self.get('apify_max_concurrent', 25)
+
+    @property
+    def apify_rate_limit_delay(self) -> float:
+        """获取Apify API调用间隔（秒）"""
+        return self.get('apify_rate_limit_delay', 0.1)
+
+    @property
+    def apify_max_retries(self) -> int:
+        """获取Apify API最大重试次数"""
+        return self.get('apify_max_retries', 5)
+
+    @property
+    def apify_retry_backoff_base(self) -> float:
+        """获取Apify API重试基础延迟（秒）"""
+        return self.get('apify_retry_backoff_base', 2.0)
+
+    @property
+    def apify_retry_backoff_max(self) -> float:
+        """获取Apify API重试最大延迟（秒）"""
+        return self.get('apify_retry_backoff_max', 60.0)
+
+    @property
+    def blue_ocean_competition_threshold(self) -> float:
+        """获取蓝海竞争指数阈值"""
+        return self.get('blue_ocean_competition_threshold', 50.0)
+
+    @property
+    def blue_ocean_min_sales(self) -> int:
+        """获取蓝海最小销量"""
+        return self.get('blue_ocean_min_sales', 50)
+
+    @property
+    def blue_ocean_max_sales(self) -> int:
+        """获取蓝海最大销量"""
+        return self.get('blue_ocean_max_sales', 500)
+
+    @property
+    def blue_ocean_min_reviews(self) -> int:
+        """获取蓝海最小评论数"""
+        return self.get('blue_ocean_min_reviews', 20)
+
+    @property
+    def blue_ocean_max_reviews(self) -> int:
+        """获取蓝海最大评论数"""
+        return self.get('blue_ocean_max_reviews', 500)
+
+    @property
+    def blue_ocean_min_rating(self) -> float:
+        """获取蓝海最小评分"""
+        return self.get('blue_ocean_min_rating', 3.8)
+
+    @property
+    def blue_ocean_max_avg_reviews(self) -> int:
+        """获取蓝海市场平均评论数上限"""
+        return self.get('blue_ocean_max_avg_reviews', 300)
+
+    @property
+    def advertising_default_conversion_rate(self) -> float:
+        """获取广告默认转化率"""
+        return self.get('advertising_default_conversion_rate', 0.1)
+
+    @property
+    def advertising_default_profit_margin(self) -> float:
+        """获取广告默认利润率"""
+        return self.get('advertising_default_profit_margin', 0.3)
+
+    @property
+    def advertising_target_acos(self) -> float:
+        """获取广告目标ACoS"""
+        return self.get('advertising_target_acos', 25.0)
+
+    @property
+    def seasonality_high_threshold(self) -> float:
+        """获取季节性高峰阈值"""
+        return self.get('seasonality_high_threshold', 1.3)
+
+    @property
+    def seasonality_low_threshold(self) -> float:
+        """获取季节性低谷阈值"""
+        return self.get('seasonality_low_threshold', 0.7)
+
+    @property
+    def scoring_weights(self) -> dict:
+        """获取评分权重配置"""
+        return self.get('scoring_weights', {
+            'market_demand': 0.25,
+            'competition': 0.25,
+            'profitability': 0.25,
+            'entry_barrier': 0.25
+        })
+
+    @property
     def database_path(self) -> Path:
         """获取数据库路径"""
         return self.project_root / "data" / "database" / "analysis.db"
@@ -258,6 +383,76 @@ class ConfigManager:
     def logs_dir(self) -> Path:
         """获取日志目录"""
         return self.project_root / "logs"
+
+    @property
+    def keyword_cache_dir(self) -> Path:
+        """获取关键词缓存目录"""
+        return self.project_root / "data" / "keyword_cache"
+
+    def get_task_output_dir(self, keyword: str, timestamp: str) -> Path:
+        """
+        获取任务专属输出目录
+
+        Args:
+            keyword: 搜索关键词
+            timestamp: 任务时间戳
+
+        Returns:
+            任务输出目录路径 (outputs/{keyword}/{timestamp}/)
+        """
+        # 清理关键词中的特殊字符，避免文件系统问题
+        safe_keyword = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in keyword)
+        task_dir = self.project_root / "outputs" / safe_keyword / timestamp
+        return task_dir
+
+    def get_task_reports_dir(self, keyword: str, timestamp: str) -> Path:
+        """
+        获取任务专属报告目录
+
+        Args:
+            keyword: 搜索关键词
+            timestamp: 任务时间戳
+
+        Returns:
+            任务报告目录路径 (outputs/{keyword}/{timestamp}/reports/)
+        """
+        task_dir = self.get_task_output_dir(keyword, timestamp)
+        reports_dir = task_dir / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        return reports_dir
+
+    def get_task_exports_dir(self, keyword: str, timestamp: str) -> Path:
+        """
+        获取任务专属导出目录
+
+        Args:
+            keyword: 搜索关键词
+            timestamp: 任务时间戳
+
+        Returns:
+            任务导出目录路径 (outputs/{keyword}/{timestamp}/exports/)
+        """
+        task_dir = self.get_task_output_dir(keyword, timestamp)
+        exports_dir = task_dir / "exports"
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        return exports_dir
+
+    def get_task_raw_dir(self, keyword: str, timestamp: str = None) -> Path:
+        """
+        获取关键词级别的原始数据目录（可复用，避免重复下载）
+
+        Args:
+            keyword: 搜索关键词
+            timestamp: 任务时间戳（已废弃，保留参数兼容性）
+
+        Returns:
+            原始数据目录路径 (outputs/{keyword}/raw/)
+        """
+        # 清理关键词中的特殊字符
+        safe_keyword = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in keyword)
+        raw_dir = self.project_root / "outputs" / safe_keyword / "raw"
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        return raw_dir
 
 
 # 全局配置实例

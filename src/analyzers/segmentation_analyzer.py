@@ -1,21 +1,26 @@
 """
 市场细分分析器模块
 分析不同细分市场的特征和机会
+继承 BaseAnalyzer 基类
 """
 
 from typing import List, Dict, Any
 from collections import defaultdict
 
 from src.database.models import Product
-from src.utils.logger import get_logger
+from src.analyzers.base_analyzer import BaseAnalyzer
 
 
-class SegmentationAnalyzer:
-    """市场细分分析器"""
+class SegmentationAnalyzer(BaseAnalyzer):
+    """
+    市场细分分析器
+
+    继承 BaseAnalyzer，提供价格、品牌、评分、销量等维度的市场细分分析。
+    """
 
     def __init__(self):
         """初始化市场细分分析器"""
-        self.logger = get_logger()
+        super().__init__(name="SegmentationAnalyzer")
 
     def analyze(self, products: List[Product], sellerspirit_data=None) -> Dict[str, Any]:
         """
@@ -28,7 +33,7 @@ class SegmentationAnalyzer:
         Returns:
             市场细分分析结果
         """
-        self.logger.info(f"开始市场细分分析，产品数量: {len(products)}")
+        self.log_info(f"开始市场细分分析，产品数量: {len(products)}")
 
         result = {
             'price_segments': self._segment_by_price(products),
@@ -39,7 +44,7 @@ class SegmentationAnalyzer:
             'segment_opportunities': self._identify_segment_opportunities(products)
         }
 
-        self.logger.info("市场细分分析完成")
+        self.log_info("市场细分分析完成")
         return result
 
     def _segment_by_price(self, products: List[Product]) -> Dict[str, Any]:
@@ -296,6 +301,33 @@ class SegmentationAnalyzer:
                 'high_potential_keywords': [],
                 'niche_keywords': []
             }
+
+        # 如果是JSON字符串，解析它
+        import json
+        if isinstance(keyword_extensions, str):
+            try:
+                keyword_extensions = json.loads(keyword_extensions)
+            except json.JSONDecodeError:
+                self.log_warning("无法解析关键词扩展数据")
+                return {
+                    'total_keywords': 0,
+                    'segments': {},
+                    'high_potential_keywords': [],
+                    'niche_keywords': []
+                }
+
+        # 如果是字符串列表（商品标题），转换为字典格式
+        if keyword_extensions and isinstance(keyword_extensions[0], str):
+            self.log_info("检测到字符串格式的关键词扩展，转换为字典格式")
+            keyword_extensions = [
+                {
+                    'keyword': title,
+                    'search_volume': 0,
+                    'competition': 0,
+                    'relevance': 0
+                }
+                for title in keyword_extensions
+            ]
 
         # 按搜索量细分关键词
         search_volume_segments = {
